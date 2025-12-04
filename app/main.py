@@ -12,3 +12,8 @@ app.include_router(calculations.router)
 
 # Make sure tables exist
 models.Base.metadata.create_all(bind=engine)
+from fastapi.staticfiles import StaticFiles
+from app.routers import auth
+
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.include_router(auth.router)
