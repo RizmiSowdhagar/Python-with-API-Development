@@ -1,56 +1,43 @@
-# Module 14 – FastAPI Calculator (BREAD + Frontend + Tests)
+# Module 14 – BREAD Calculator (FastAPI)
 
-This project is a calculator service built with **FastAPI** that implements full **BREAD** operations:
+This project is the **Module 14** assignment for implementing full BREAD (Browse, Read, Edit, Add, Delete) operations for a calculations service.
 
-- **Browse** all calculations for the current user  
-- **Read** a single calculation by ID  
-- **Edit** an existing calculation  
-- **Add** a new calculation  
-- **Delete** a calculation  
-
-It also includes:
-
-- A small **HTML + JavaScript frontend** for interacting with the API  
-- **Pytest** unit/integration tests  
-- **Playwright** end-to-end tests for the UI  
-- **Dockerfile** and **GitHub Actions** workflow for CI/CD
+The app exposes a secured REST API using **FastAPI**, a small HTML/JS front-end for interacting with the API, automated **unit/integration tests** with `pytest`, **end-to-end tests** with **Playwright**, and a **Docker** image published to Docker Hub with a **GitHub Actions** CI/CD pipeline.
 
 ---
 
 ## Tech Stack
 
-- Python 3.11+ / FastAPI
-- SQLAlchemy + SQLite
-- Pydantic v2
-- HTML + CSS + vanilla JavaScript
-- Pytest
-- Playwright
-- Docker
-- GitHub Actions
+- **Backend:** FastAPI, SQLAlchemy, Pydantic v2, SQLite  
+- **Auth:** JWT bearer tokens (OAuth2 password flow)  
+- **Frontend:** Vanilla HTML/CSS/JavaScript in `app/static/index.html`  
+- **Testing:** `pytest` (unit + integration), Playwright E2E  
+- **DevOps:** Docker, Docker Hub, GitHub Actions CI  
 
 ---
 
-## Project Layout
+## Project Structure (high level)
 
 ```text
 app/
-  main.py                # FastAPI application entrypoint
-  models.py              # SQLAlchemy models
-  database.py            # DB engine & SessionLocal
-  oauth2.py              # Auth helpers / get_current_user
-  schemas.py             # Pydantic models (Users, Calculations)
-  routers/
-    users.py             # /users/register, /users/login
-    auth.py              # token routes (if needed)
-    calculations.py      # /calculations BREAD endpoints
-  static/
-    index.html           # Frontend UI
-    app.js               # Frontend JS logic (calls API)
+  ├── main.py                 # FastAPI app, router registration
+  ├── models.py               # SQLAlchemy models (User, Calculation)
+  ├── schemas.py              # Pydantic models for requests/responses
+  ├── database.py             # DB engine + SessionLocal
+  ├── oauth2.py               # JWT creation & get_current_user dependency
+  ├── routers/
+  │     ├── auth.py           # /users/register, /users/login
+  │     └── calculations.py   # /calculations BREAD endpoints
+  └── static/
+        └── index.html        # BREAD UI (form + table)
+
 tests/
-  test_calculation_unit.py
-  test_calculation_integration.py
-  test_calculations_integration.py
-  test_users_integration.py
-  e2e_calculations.spec.ts   # Playwright end-to-end tests
-Dockerfile
-requirements.txt
+  ├── test_calculation_unit.py
+  ├── test_calculation_integration.py
+  ├── test_calculations_integration.py
+  ├── test_users_integration.py
+  └── e2e_calculations.spec.ts   # Playwright tests
+
+.github/
+  └── workflows/
+        └── ci.yml           # CI pipeline (pytest + Docker build/push)
