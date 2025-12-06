@@ -32,10 +32,12 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Install Playwright
-        run: |
-          npm install
-          npx playwright install --with-deps
+      - name: Install npm dependencies
+        run: npm install
+
+      # This action installs the Playwright browsers correctly on GitHub runners
+      - name: Install Playwright browsers
+        uses: microsoft/playwright-github-action@v1
 
       - name: Run Playwright tests
         run: npx playwright test
