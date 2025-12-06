@@ -281,3 +281,12 @@ class CalculationOut(BaseModel):
     created_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
+class OperationCount(BaseModel):
+    operator: str
+    count: int
+
+
+class UsageSummary(BaseModel):
+    total_calculations: int
+    per_operation: list[OperationCount]
+    last_calculation_at: datetime | None

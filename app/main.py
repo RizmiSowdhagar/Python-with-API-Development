@@ -34,3 +34,7 @@ app.mount(
 @app.get("/")
 def read_root():
     return {"message": "FastAPI Calculator with BREAD"}
+from app.routers import report
+app.include_router(report.router)
+from fastapi.staticfiles import StaticFiles
+app.mount("/static", StaticFiles(directory="app/static"), name="static")

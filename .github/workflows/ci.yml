@@ -1,23 +1,23 @@
-﻿name: CI
+name: CI
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
   pull_request:
-    branches: ["main"]
+    branches: [ "main" ]
 
 jobs:
-  test-build-and-push:
+  build-test-and-push:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.11"
 
       - name: Install Python dependencies
         run: |
@@ -25,52 +25,29 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run pytest
-        env:
-          DATABASE_URL: "sqlite:///./test-ci.db"
-        run: |
-          pytest
+        run: pytest
 
-      - name: Set up Node.js
+      - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "20"
 
-      - name: Install Playwright and deps
+      - name: Install Playwright
         run: |
-          npm ci
+          npm install
           npx playwright install --with-deps
 
-      - name: Run FastAPI server and Playwright tests
-        env:
-          DATABASE_URL: "sqlite:///./test-ci.db"
-        run: |
-          uvicorn app.main:app --host 0.0.0.0 --port 8000 &
-          SERVER_PID=$!
-
-          # wait for server to be ready
-          for i in {1..15}; do
-            if curl -sSf http://127.0.0.1:8000/docs > /dev/null; then
-              echo "Server is up!"
-              break
-            fi
-            echo "Waiting for server..."
-            sleep 2
-          done
-
-          npx playwright test
-          kill $SERVER_PID
+      - name: Run Playwright tests
+        run: npx playwright test
 
       - name: Log in to Docker Hub
-        if: success()
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push Docker image
-        if: success()
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: pratibhajagati/fastapi-bread-calculator:latest
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/fast-api-calci:latest .
+
+      - name: Push Docker image
+        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/fast-api-calci:latest
