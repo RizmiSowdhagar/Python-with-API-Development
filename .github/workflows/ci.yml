@@ -35,9 +35,9 @@ jobs:
       - name: Install npm dependencies
         run: npm install
 
-      # This action installs the Playwright browsers correctly on GitHub runners
+      # Install Playwright browsers + system dependencies on the CI runner
       - name: Install Playwright browsers
-        uses: microsoft/playwright-github-action@v1
+        run: npx playwright install --with-deps
 
       - name: Run Playwright tests
         run: npx playwright test
