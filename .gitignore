@@ -1,11 +1,12 @@
-venv/
+﻿venv/
+.venv/
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+.pytest_cache/
+.playwright/
+test-results/
+*.sqlite3
 *.db
 .env
-.env.*
 .idea/
 .vscode/
 .DS_Store
