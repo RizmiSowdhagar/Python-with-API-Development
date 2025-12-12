@@ -1,69 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Usage Summary</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 2rem auto; }
+    h1 { margin-bottom: 0.5rem; }
+    #stats { margin-top: 1.5rem; padding: 1rem; border: 1px solid #ccc; border-radius: 8px; }
+    #per-op-list { margin-top: 0.5rem; }
+    .error { color: darkred; margin-top: 0.5rem; }
+  </style>
 </head>
 <body>
   <h1>Application Usage Summary</h1>
+  <p>This page shows how many calculations have been done in the app.</p>
 
   <button id="show-stats-btn">Load Stats</button>
 
-  <div id="stats-container" style="margin-top: 1rem; padding: 0.5rem; border: 1px solid #ccc;">
-    <p id="stats-total">Total calculations: -</p>
-    <p id="stats-last">Last calculation at: -</p>
-    <ul id="stats-per-operation"></ul>
+  <div id="stats">
+    <p>Total calculations: <span id="stats-total">-</span></p>
+    <p>Last calculation at: <span id="stats-last">-</span></p>
+    <div>
+      <strong>Per operation:</strong>
+      <ul id="per-op-list"></ul>
+    </div>
+    <p class="error" id="stats-error"></p>
   </div>
 
   <script>
-    async function fetchStats() {
+    async function loadStats() {
+      const totalEl = document.getElementById('stats-total');
+      const lastEl = document.getElementById('stats-last');
+      const listEl = document.getElementById('per-op-list');
+      const errorEl = document.getElementById('stats-error');
+
+      errorEl.textContent = '';
+      totalEl.textContent = '...';
+      lastEl.textContent = '...';
+      listEl.innerHTML = '';
+
       try {
-        const response = await fetch("http://127.0.0.1:8000/reports/summary", {
-          method: "GET",
-          headers: {
-            "Accept": "application/json"
-          }
+        const resp = await fetch('/reports/summary');
+        if (!resp.ok) {
+          throw new Error('Server returned ' + resp.status);
+        }
+        const data = await resp.json();
+        totalEl.textContent = data.total_calculations ?? 0;
+        lastEl.textContent = data.last_calculation_at || 'never';
+
+        (data.per_operation || []).forEach(op => {
+          const li = document.createElement('li');
+          li.textContent = `${op.operator}: ${op.count}`;
+          listEl.appendChild(li);
         });
-
-        if (!response.ok) {
-          const errText = await response.text();
-          console.error("Error:", errText);
-          alert("Could not fetch stats.");
-          return;
-        }
-
-        const data = await response.json();
-
-        document.getElementById("stats-total").textContent =
-          "Total calculations: " + data.total_calculations;
-
-        document.getElementById("stats-last").textContent =
-          "Last calculation at: " + (data.last_calculation_at || "N/A");
-
-        const list = document.getElementById("stats-per-operation");
-        list.innerHTML = "";
-
-        if (data.per_operation.length === 0) {
-          const li = document.createElement("li");
-          li.textContent = "No calculations yet.";
-          list.appendChild(li);
-        } else {
-          data.per_operation.forEach(item => {
-            const li = document.createElement("li");
-            li.textContent = item.operator + ": " + item.count;
-            list.appendChild(li);
-          });
-        }
-
-      } catch (e) {
-        console.error(e);
-        alert("Something went wrong while loading stats.");
+      } catch (err) {
+        totalEl.textContent = '-';
+        lastEl.textContent = '-';
+        errorEl.textContent = 'Could not load stats: ' + err;
       }
     }
 
     document
-      .getElementById("show-stats-btn")
-      .addEventListener("click", fetchStats);
+      .getElementById('show-stats-btn')
+      .addEventListener('click', loadStats);
   </script>
 </body>
 </html>
