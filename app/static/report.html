@@ -1,68 +1,105 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Usage Summary</title>
-  <style>
-    body { font-family: Arial, sans-serif; max-width: 700px; margin: 2rem auto; }
-    h1 { margin-bottom: 0.5rem; }
-    #stats { margin-top: 1.5rem; padding: 1rem; border: 1px solid #ccc; border-radius: 8px; }
-    #per-op-list { margin-top: 0.5rem; }
-    .error { color: darkred; margin-top: 0.5rem; }
-  </style>
-</head>
-<body>
-  <h1>Application Usage Summary</h1>
-  <p>This page shows how many calculations have been done in the app.</p>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Usage Summary</title>
+  </head>
+  <body>
+    <h1>Usage Summary</h1>
 
-  <button id="show-stats-btn">Load Stats</button>
+    <button id="show-stats-btn">Show usage summary</button>
 
-  <div id="stats">
-    <p>Total calculations: <span id="stats-total">-</span></p>
-    <p>Last calculation at: <span id="stats-last">-</span></p>
-    <div>
-      <strong>Per operation:</strong>
-      <ul id="per-op-list"></ul>
-    </div>
-    <p class="error" id="stats-error"></p>
-  </div>
+    <p id="stats-total"></p>
 
-  <script>
-    async function loadStats() {
-      const totalEl = document.getElementById('stats-total');
-      const lastEl = document.getElementById('stats-last');
-      const listEl = document.getElementById('per-op-list');
-      const errorEl = document.getElementById('stats-error');
+    <h2>Per operation</h2>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Operation</th>
+          <th>Count</th>
+        </tr>
+      </thead>
+      <tbody id="stats-per-operation"></tbody>
+    </table>
 
-      errorEl.textContent = '';
-      totalEl.textContent = '...';
-      lastEl.textContent = '...';
-      listEl.innerHTML = '';
+    <script>
+      async function loadSummary() {
+        const totalEl = document.getElementById("stats-total");
+        const perOpEl = document.getElementById("stats-per-operation");
 
-      try {
-        const resp = await fetch('/reports/summary');
-        if (!resp.ok) {
-          throw new Error('Server returned ' + resp.status);
+        // Try both possible keys: "token" and "access_token"
+        const storedToken =
+          localStorage.getItem("token") ||
+          localStorage.getItem("access_token");
+
+        if (!storedToken) {
+          totalEl.textContent =
+            "You must be logged in to see the report.";
+          perOpEl.innerHTML = "";
+          return;
         }
-        const data = await resp.json();
-        totalEl.textContent = data.total_calculations ?? 0;
-        lastEl.textContent = data.last_calculation_at || 'never';
 
-        (data.per_operation || []).forEach(op => {
-          const li = document.createElement('li');
-          li.textContent = `${op.operator}: ${op.count}`;
-          listEl.appendChild(li);
-        });
-      } catch (err) {
-        totalEl.textContent = '-';
-        lastEl.textContent = '-';
-        errorEl.textContent = 'Could not load stats: ' + err;
+        // Make sure we send "Bearer <token>"
+        const authHeader = storedToken.startsWith("Bearer ")
+          ? storedToken
+          : `Bearer ${storedToken}`;
+
+        try {
+          const resp = await fetch("/reports/summary", {
+            method: "GET",
+            headers: {
+              Authorization: authHeader,
+              "Content-Type": "application/json",
+            },
+          });
+
+          if (!resp.ok) {
+            totalEl.textContent =
+              "Failed to load summary (" + resp.status + ")";
+            perOpEl.innerHTML = "";
+            return;
+          }
+
+          const data = await resp.json();
+
+          totalEl.textContent =
+            "Total calculations: " + data.total_calculations;
+
+          perOpEl.innerHTML = "";
+
+          if (data.per_operation.length === 0) {
+            const tr = document.createElement("tr");
+            const td = document.createElement("td");
+            td.colSpan = 2;
+            td.textContent = "No calculations yet.";
+            tr.appendChild(td);
+            perOpEl.appendChild(tr);
+            return;
+          }
+
+          for (const row of data.per_operation) {
+            const tr = document.createElement("tr");
+
+            const tdOp = document.createElement("td");
+            tdOp.textContent = row.operator;
+
+            const tdCount = document.createElement("td");
+            tdCount.textContent = row.count.toString();
+
+            tr.appendChild(tdOp);
+            tr.appendChild(tdCount);
+            perOpEl.appendChild(tr);
+          }
+        } catch (err) {
+          console.error(err);
+          totalEl.textContent = "Error loading summary.";
+          perOpEl.innerHTML = "";
+        }
       }
-    }
 
-    document
-      .getElementById('show-stats-btn')
-      .addEventListener('click', loadStats);
-  </script>
-</body>
+      document
+        .getElementById("show-stats-btn")
+        .addEventListener("click", loadSummary);
+    </script>
+  </body>
 </html>
