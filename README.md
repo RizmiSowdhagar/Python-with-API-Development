@@ -106,3 +106,5 @@ tests/
   test_report_integration.py      # NEW integration test for /reports/summary
   report.e2e.spec.ts              # NEW E2E test for summary UI (Playwright)
   ... (other existing E2E tests)
+
+
